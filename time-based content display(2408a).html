@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>time-based content display</title>
+    <style>
+        #displayText {
+            color: black; /* 默认字体颜色为黑色 */
+        }
+    </style>
+</head>
+<body>
+
+<h1 id="displayText">文本甲</h1>
+
+<script>
+    function updateTimeDisplay() {
+        // 获取当前时间
+        var now = new Date();
+        var currentHour = now.getHours();
+        var currentMinute = now.getMinutes();
+        var currentSecond = now.getSeconds();
+
+        // 设置特定时间范围（文本、颜色）
+        var startTimeText = { hour: 21, minute: 0, second: 0 };
+        var endTimeText = { hour: 21, minute: 30, second: 0 };
+        var startTimeColor = { hour: 21, minute: 0, second: 0 };
+        var endTimeColor = { hour: 21, minute: 5, second: 0 };
+
+        // 检查当前时间是否在指定范围内（文本、颜色）
+        var inTimeRangeText = isWithinTimeRange(currentHour, currentMinute, currentSecond, startTimeText, endTimeText);
+        var inTimeRangeColor = isWithinTimeRange(currentHour, currentMinute, currentSecond, startTimeColor, endTimeColor);
+
+        // 控制显示的文本
+        var displayText = inTimeRangeText ? '文本乙' : '文本甲';
+        document.getElementById('displayText').innerText = displayText;
+
+        // 控制文本的颜色
+        if (inTimeRangeColor && currentSecond % 2 === 0) {
+            document.getElementById('displayText').style.color = 'red';
+        } else {
+            document.getElementById('displayText').style.color = 'black';
+        }
+
+        // 根据距离开始时间的秒数设置不同的更新频率（根据startTimeText）
+        var updateInterval = getUpdateInterval(currentHour, currentMinute, currentSecond, startTimeText);
+        setTimeout(updateTimeDisplay, updateInterval);
+    }
+
+    function isWithinTimeRange(hour, minute, second, startTime, endTime) {
+        return (hour === startTime.hour && minute >= startTime.minute && second >= startTime.second) ||
+               (hour === endTime.hour && minute < endTime.minute) ||
+               (hour > startTime.hour && hour < endTime.hour) ||
+               (hour === endTime.hour && minute === endTime.minute && second <= endTime.second);
+    }
+
+    function getUpdateInterval(hour, minute, second, startTime) {
+        var secondsToStart = (startTime.hour - hour) * 3600 + (startTime.minute - minute) * 60 + (startTime.second - second);
+        return secondsToStart <= 60 ? 1000 : 60000;
+    }
+
+    // 页面加载时立即执行一次
+    updateTimeDisplay();
+</script>
+
+</body>
+</html>
