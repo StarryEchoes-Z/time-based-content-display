@@ -1,0 +1,99 @@
+<!-- 2408b -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>time-based content display</title>
+    <style>
+        #displayText {
+            color: black; /* 默认字体颜色为黑色 */
+        }
+    </style>
+</head>
+<body>
+
+<h1 id="displayText"></h1>
+
+<script>
+    var textA = '文本甲';
+    var textB = '文本乙';
+    function updateTimeDisplay() {
+        // 获取当前时间
+        var now = new Date();
+        var currentHour = now.getHours();
+        var currentMinute = now.getMinutes();
+        var currentSecond = now.getSeconds();
+
+        // 设置特定时间范围（文本、颜色）
+        var startTimeText = { hour: 19, minute: 19, second: 0 };
+        var endTimeText = { hour: 19, minute: 19, second: 45 };
+        var startTimeColor = { hour: 19, minute: 19, second: 15 };
+        var endTimeColor = { hour: 19, minute: 19, second: 30 };
+
+        // 检查当前时间是否在指定范围内（文本、颜色）
+        var inTimeRangeText = isWithinTimeRange(currentHour, currentMinute, currentSecond, startTimeText, endTimeText);
+        var inTimeRangeColor = isWithinTimeRange(currentHour, currentMinute, currentSecond, startTimeColor, endTimeColor);
+
+        // 控制显示的文本
+        var displayText = inTimeRangeText ? textB : textA;
+        document.getElementById('displayText').innerText = displayText;
+
+        // 控制文本的颜色
+        if (inTimeRangeColor && currentSecond % 2 === 0) {
+            document.getElementById('displayText').style.color = 'red';
+        } else {
+            document.getElementById('displayText').style.color = 'black';
+        }
+
+        // 根据距离开始时间的秒数设置不同的更新频率（根据startTimeText）
+        var updateInterval = getUpdateInterval(currentHour, currentMinute, currentSecond, startTimeText, endTimeText);
+        console.log('Update Interval:', updateInterval);
+        setTimeout(updateTimeDisplay, updateInterval);
+    }
+
+    function isWithinTimeRange(hour, minute, second, startTime, endTime) {
+        var start = new Date(0, 0, 0, startTime.hour, startTime.minute, startTime.second);
+        var end = new Date(0, 0, 0, endTime.hour, endTime.minute, endTime.second);
+
+        // 如果开始时间晚于结束时间，表示时间范围跨越第二天
+        if (start > end) {
+            var nextDayEnd = new Date(0, 0, 1, endTime.hour, endTime.minute, endTime.second);
+            return (new Date(0, 0, 0, hour, minute, second) >= start) || (new Date(0, 0, 0, hour, minute, second) <= nextDayEnd);
+        } else {
+            return (new Date(0, 0, 0, hour, minute, second) >= start) && (new Date(0, 0, 0, hour, minute, second) <= end);
+        }
+    }
+
+    function getUpdateInterval(hour, minute, second, startTime, endTime) {
+        var start = new Date(0, 0, 0, startTime.hour, startTime.minute, startTime.second);
+        var end = new Date(0, 0, 0, endTime.hour, endTime.minute, endTime.second);
+
+        // 如果开始时间晚于结束时间，表示时间范围跨越第二天
+        if (start > end) {
+            var nextDayEnd = new Date(0, 0, 1, endTime.hour, endTime.minute, endTime.second);
+            var current = new Date(0, 0, 0, hour, minute, second);
+            var secondsToStart = (start - current) / 1000;
+            var secondsPastEnd = (current - nextDayEnd) / 1000;
+            if (secondsToStart > 60 || secondsPastEnd > 0) {
+                return 60000; // 每分钟更新一次
+            } else {
+                return 1000; // 每秒更新一次
+            }
+        } else {
+            var current = new Date(0, 0, 0, hour, minute, second);
+            var secondsToStart = (start - current) / 1000;
+            var secondsPastEnd = (current - end) / 1000;
+            if (secondsToStart > 60 || secondsPastEnd > 0) {
+                return 60000; // 每分钟更新一次
+            } else {
+                return 1000; // 每秒更新一次
+            }
+        }
+    }
+
+    // 页面加载时立即执行一次
+    updateTimeDisplay();
+</script>
+
+</body>
+</html>
