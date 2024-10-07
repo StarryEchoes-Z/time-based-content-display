@@ -1,0 +1,152 @@
+<!-- 2410a -->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>time-based content display</title>
+    <style>
+        #displayText {
+            color: black; /* 默认字体颜色为黑色 */
+        }
+    </style>
+</head>
+<body>
+
+<h1 id="displayText"></h1>
+<button id="startButton">开始显示文本</button>
+<audio id="myAudio" src="newaudioA.mp3" style="display:none;">
+    您的浏览器不支持 audio 元素。
+</audio>
+
+<script>
+    var textA = '文本甲';
+    var textB = '文本乙';
+    var isDisplaying = false; // 添加一个标志来控制是否开始显示文本
+
+    function updateTimeDisplay() {
+        if (!isDisplaying) return; // 如果没有开始显示，则退出函数
+
+        var now = new Date();
+        var currentHour = now.getHours();
+        var currentMinute = now.getMinutes();
+        var currentSecond = now.getSeconds();
+
+        var startTimeText;
+        var endTimeText;
+        var startTimeColor;
+        var endTimeColor;
+        var audioTime = {};
+
+        //预设1，只需修改下面第一行
+        startTimeText = { hour: 16, minute: 0, second: 0 };//second值应该为0
+        endTimeText = { hour: 23, minute: 50, second: 0 };
+        startTimeColor = startTimeText;
+        endTimeColor = endTimeText;
+        audioTime.hour = startTimeText.hour;
+        audioTime.minute = startTimeText.minute;
+        audioTime.second = startTimeText.second + 10;//若audioTime.second>=60，则可能发生错误
+
+        //详细设置
+        /*
+        startTimeText = { hour: 16, minute: 0, second: 0 };
+        endTimeText = { hour: 19, minute: 19, second: 45 };
+        startTimeColor = { hour: 16, minute: 5, second: 0 };
+        endTimeColor = { hour: 16, minute: 10, second: 0 };
+        audioTime = { hour: 16, minute: 5, second: 0 };
+        */
+
+        var inTimeRangeText = isWithinTimeRange(currentHour, currentMinute, currentSecond, startTimeText, endTimeText);
+        var inTimeRangeColor = isWithinTimeRange(currentHour, currentMinute, currentSecond, startTimeColor, endTimeColor);
+
+        var audioElement = document.getElementById('myAudio');
+
+        var displayText = inTimeRangeText ? textB : textA;
+        document.getElementById('displayText').innerText = displayText;
+
+        if (inTimeRangeColor && currentSecond % 2 === 0) {
+            document.getElementById('displayText').style.color = 'red';
+        } else {
+            document.getElementById('displayText').style.color = 'black';
+        }
+
+        var updateInterval = getUpdateInterval(currentHour, currentMinute, currentSecond, startTimeText, endTimeText);
+        console.log('Update Interval:', updateInterval);
+        setTimeout(updateTimeDisplay, updateInterval);
+
+        if (checkDifferenceToAudio(audioTime)) {
+            audioElement.play()
+        }
+    }
+
+    function isWithinTimeRange(hour, minute, second, startTime, endTime) {
+        var start = new Date(0, 0, 0, startTime.hour, startTime.minute, startTime.second);
+        var end = new Date(0, 0, 0, endTime.hour, endTime.minute, endTime.second);
+
+        if (start > end) {
+            var nextDayEnd = new Date(0, 0, 1, endTime.hour, endTime.minute, endTime.second);
+            return (new Date(0, 0, 0, hour, minute, second) >= start) || (new Date(0, 0, 0, hour, minute, second) <= nextDayEnd);
+        } else {
+            return (new Date(0, 0, 0, hour, minute, second) >= start) && (new Date(0, 0, 0, hour, minute, second) <= end);
+        }
+    }
+
+    function getUpdateInterval(hour, minute, second, startTime, endTime) {
+        var start = new Date(0, 0, 0, startTime.hour, startTime.minute, startTime.second);
+        var end = new Date(0, 0, 0, endTime.hour, endTime.minute, endTime.second);
+
+        if (start > end) {
+            var nextDayEnd = new Date(0, 0, 1, endTime.hour, endTime.minute, endTime.second);
+            var current = new Date(0, 0, 0, hour, minute, second);
+            var secondsToStart = (start - current) / 1000;
+            var secondsPastEnd = (current - nextDayEnd) / 1000;
+            if (secondsToStart > 60 || secondsPastEnd > 0) {
+                return 60000; // 每分钟更新一次
+            } else {
+                return 1000; // 每秒更新一次
+            }
+        } else {
+            var current = new Date(0, 0, 0, hour, minute, second);
+            var secondsToStart = (start - current) / 1000;
+            var secondsPastEnd = (current - end) / 1000;
+            if (secondsToStart > 60 || secondsPastEnd > 0) {
+                return 60000; // 每分钟更新一次
+            } else {
+                return 1000; // 每秒更新一次
+            }
+        }
+    }
+
+    function checkDifferenceToAudio(targetTime) {
+        // 计算差值
+        
+        var now = new Date();
+        var currentHour = now.getHours();
+        var currentMinute = now.getMinutes();
+        var currentSecond = now.getSeconds();
+
+        var currentTimeInSeconds = (currentHour * 3600) + (currentMinute * 60) + currentSecond;
+        var targetTimeInSeconds = (targetTime.hour * 3600) + (targetTime.minute * 60) + targetTime.second;
+
+        // 调整为当天的剩余秒数，如果已经是过了指定的时间
+        if (differenceInSeconds < 0) {
+            differenceInSeconds += 24 * 3600; // 加上一天的秒数
+        }
+
+        var differenceInSeconds = currentTimeInSeconds - targetTimeInSeconds;
+
+        console.log('differenceInSeconds:', differenceInSeconds);
+        // 返回 true 如果差值为 0 或 5 秒
+        return differenceInSeconds === 0 || differenceInSeconds === 5;
+    }
+
+
+    document.getElementById('startButton').addEventListener('click', function() {
+        isDisplaying = true;
+        document.getElementById('startButton').style.display = 'none'; // 隐藏按钮
+        updateTimeDisplay(); // 用户点击按钮后开始执行
+    });
+</script>
+
+</body>
+</html>
